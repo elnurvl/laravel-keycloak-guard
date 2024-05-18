@@ -8,27 +8,31 @@ use Firebase\JWT\JWT;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use KeycloakGuard\KeycloakGuardServiceProvider;
+use KeycloakGuard\PublicKey;
 use KeycloakGuard\Tests\Factories\UserFactory;
 use KeycloakGuard\Tests\Models\User;
-use KeycloakGuard\Token;
 use OpenSSLAsymmetricKey;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Ramsey\Uuid\Uuid;
 
 class TestCase extends Orchestra
 {
     public OpenSSLAsymmetricKey $privateKey;
-    public string $publicKey;
+    public string $realm = 'RS256';
     public array $payload;
     public string $token;
+    public string $kid;
 
     protected function setUp(): void
     {
         // Prepare credentials
+        parent::setUp();
+
         $this->prepareCredentials();
 
-        parent::setUp();
         $this->withoutExceptionHandling();
 
         // bootstrap
@@ -40,7 +44,7 @@ class TestCase extends Orchestra
         ]);
     }
 
-    protected function prepareCredentials(string $encryptionAlgorithm = 'RS256', ?array $openSSLConfig = null): void
+    protected function prepareCredentials(string $encryptionAlgorithm = 'RS256', ?array $openSSLConfig = null, ?string $realm = null): void
     {
         // Prepare private/public keys and a default JWT token, with a simple payload
         if (!$openSSLConfig) {
@@ -53,14 +57,28 @@ class TestCase extends Orchestra
 
         $this->privateKey = openssl_pkey_new($openSSLConfig);
 
-        $this->publicKey = openssl_pkey_get_details($this->privateKey)['key'];
+        $publicKey = openssl_pkey_get_details($this->privateKey)['key'];
+
+        $realm ??= $this->realm;
+        $baseUrl = config('keycloak.host').'/realms/'.$realm;
+
+        $this->kid = Uuid::uuid4()->toString();
+
+        Http::fake([
+            "$baseUrl/.well-known/openid-configuration" => Http::response([
+                'jwks_uri' => "$baseUrl/protocol/openid-connect/certs"
+            ]),
+            "$baseUrl/protocol/openid-connect/certs" => Http::response([
+                'keys' => [ PublicKey::convertPublicKeyToJWK($publicKey, $encryptionAlgorithm, $this->kid) ]
+            ]),
+        ]);
 
         $this->payload = [
             'preferred_username' => 'johndoe',
             'resource_access' => ['myapp-backend' => []]
         ];
 
-        $this->token = JWT::encode($this->payload, $this->privateKey, $encryptionAlgorithm);
+        $this->token = JWT::encode($this->payload, $this->privateKey, $encryptionAlgorithm, $this->kid);
     }
 
     // Default configs to make it running
@@ -75,7 +93,7 @@ class TestCase extends Orchestra
         ]);
 
         $app['config']->set('keycloak', [
-            'realm_public_key' => Token::plainPublicKey($this->publicKey),
+            'realm' => $this->realm,
             'user_provider_credential' => 'username',
             'token_principal_attribute' => 'preferred_username',
             'append_decoded_token' => false,
@@ -106,7 +124,7 @@ class TestCase extends Orchestra
     {
         $payload = array_replace($this->payload, $payload);
 
-        $this->token = JWT::encode($payload, $this->privateKey, $encryptionAlgorithm);
+        $this->token = JWT::encode($payload, $this->privateKey, $encryptionAlgorithm, $this->kid);
     }
 
     // Setup default token, for the default user

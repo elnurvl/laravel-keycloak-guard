@@ -413,7 +413,7 @@ class AuthenticateTest extends TestCase
         $this->actingAsKeycloakUser($this->user)->json('GET', '/foo/secret');
 
         $this->assertEquals($this->user->username, Auth::user()->username);
-        $token = Token::decode(request()->bearerToken(), config('keycloak.realm_public_key'), config('keycloak.leeway'), config('keycloak.token_encryption_algorithm'));
+        $token = Token::decode(request()->bearerToken(), config('keycloak.leeway'));
         $this->assertNotNull($token->iat);
         $this->assertNotNull($token->exp);
     }
@@ -423,7 +423,7 @@ class AuthenticateTest extends TestCase
         $this->actingAsKeycloakUser($this->user->username)->json('GET', '/foo/secret');
 
         $this->assertEquals($this->user->username, Auth::user()->username);
-        $token = Token::decode(request()->bearerToken(), config('keycloak.realm_public_key'), config('keycloak.leeway'), config('keycloak.token_encryption_algorithm'));
+        $token = Token::decode(request()->bearerToken(), config('keycloak.leeway'));
         $this->assertNotNull($token->iat);
         $this->assertNotNull($token->exp);
     }
@@ -442,7 +442,7 @@ class AuthenticateTest extends TestCase
         ])->json('GET', '/foo/secret');
 
         $this->assertEquals('test_username', Auth::user()->username);
-        $token = Token::decode(request()->bearerToken(), config('keycloak.realm_public_key'), config('keycloak.leeway'), config('keycloak.token_encryption_algorithm'));
+        $token = Token::decode(request()->bearerToken(), config('keycloak.leeway'));
         $this->assertEquals(12345, $token->iat);
         $this->assertEquals(9999999999999, $token->exp);
         $this->assertEquals('test_sub', $token->sub);
@@ -458,19 +458,29 @@ class AuthenticateTest extends TestCase
         $this->assertFalse(Auth::guest());
     }
 
-    public function test_it_decodes_token_with_the_configured_encryption_algorithm()
+    /**
+     * @dataProvider algorithmProvider
+     * @return void
+     */
+    public function test_it_decodes_token_with_the_configured_encryption_algorithm(string $algorithm)
     {
-        $this->prepareCredentials('ES256', [
+        $this->prepareCredentials($algorithm, [
             'private_key_type' => OPENSSL_KEYTYPE_EC,
             'curve_name' => 'prime256v1'
-        ]);
+        ], $algorithm);
 
         config([
-            'keycloak.token_encryption_algorithm' => 'ES256',
-            'keycloak.realm_public_key' => Token::plainPublicKey($this->publicKey)
+            'keycloak.realm' => $algorithm,
         ]);
 
         $this->withKeycloakToken()->json('GET', '/foo/secret');
         $this->assertEquals($this->user->username, Auth::user()->username);
+    }
+
+    public function algorithmProvider(): array
+    {
+        return [
+            ['ES256'],
+        ];
     }
 }

@@ -88,19 +88,17 @@ For facades, uncomment `$app->withFacades();` in your boostrap app file `bootstr
 php artisan vendor:publish  --provider="KeycloakGuard\KeycloakGuardServiceProvider"
 ```
 
-✔️ **realm_public_key**
+✔️ **host**
 
 _Required._
 
-The Keycloak Server realm public key (string).
+The Keycloak Server host (string).
 
-> How to get realm public key? Click on "Realm Settings" > "Keys" > "Algorithm RS256 (or defined under token_encryption_algorithm configuration)" Line > "Public Key" Button
+✔️ **realm**
 
-✔️ **token_encryption_algorithm**
+_Required._
 
-_Default is `RS256`._
-
-The JWT token encryption algorithm used by Keycloak (string).
+The Keycloak realm.
 
 ✔️ **load_user_from_database**
 
@@ -304,7 +302,7 @@ Auth::hasAnyRole('myapp-backend', ['myapp-frontend-role1', 'myapp-frontend-role2
 Example decoded payload:
 ```json
 {
-    "scope": "scope-a scope-b scope-c",
+    "scope": "scope-a scope-b scope-c"
 }
 ```
 

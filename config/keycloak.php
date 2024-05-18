@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 return [
-    'realm_public_key' => env('KEYCLOAK_REALM_PUBLIC_KEY', null),
+    'host' => env('KEYCLOAK_HOST', 'http://localhost:8080'),
 
-    'token_encryption_algorithm' => env('KEYCLOAK_TOKEN_ENCRYPTION_ALGORITHM', 'RS256'),
+    'realm' => env('KEYCLOAK_REALM', 'master'),
 
     'load_user_from_database' => env('KEYCLOAK_LOAD_USER_FROM_DATABASE', true),
 

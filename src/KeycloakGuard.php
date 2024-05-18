@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace KeycloakGuard;
 
-use Exception;
+use Firebase\JWT\BeforeValidException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -41,8 +41,8 @@ class KeycloakGuard implements Guard
     protected function authenticate(): void
     {
         try {
-            $this->decodedToken = Token::decode($this->getTokenForRequest(), $this->config['realm_public_key'], $this->config['leeway'], $this->config['token_encryption_algorithm']);
-        } catch (Exception $e) {
+            $this->decodedToken = Token::decode($this->getTokenForRequest(), $this->config['leeway']);
+        } catch (BeforeValidException $e) {
             throw new TokenException($e->getMessage());
         }
 

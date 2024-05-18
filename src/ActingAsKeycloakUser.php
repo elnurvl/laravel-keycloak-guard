@@ -7,6 +7,8 @@ namespace KeycloakGuard;
 use Firebase\JWT\JWT;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Ramsey\Uuid\Uuid;
 
 trait ActingAsKeycloakUser
 {
@@ -25,6 +27,7 @@ trait ActingAsKeycloakUser
 
     public function generateKeycloakToken(Authenticatable|string|null $user = null, array $payload = []): string
     {
+        $alg = 'RS256';
         $privateKey = openssl_pkey_new([
             'digest_alg' => 'sha256',
             'private_key_bits' => 1024,
@@ -33,9 +36,22 @@ trait ActingAsKeycloakUser
 
         $publicKey = openssl_pkey_get_details($privateKey)['key'];
 
-        $publicKey = Token::plainPublicKey($publicKey);
+        $kid = Uuid::uuid4()->toString();
 
-        Config::set('keycloak.realm_public_key', $publicKey);
+        $realm = 'laravel';
+
+        Config::set('keycloak.realm', $realm);
+
+        $baseUrl = config('keycloak.host').'/realms/'.$realm;
+
+        Http::fake([
+            "$baseUrl/.well-known/openid-configuration" => Http::response([
+                'jwks_uri' => "$baseUrl/protocol/openid-connect/certs"
+            ]),
+            "$baseUrl/protocol/openid-connect/certs" => Http::response([
+                'keys' => [ PublicKey::convertPublicKeyToJWK($publicKey, $alg, $kid) ]
+            ]),
+        ]);
 
         $iat = time();
         $exp = time() + 300;
@@ -50,6 +66,6 @@ trait ActingAsKeycloakUser
             'resource_access' => $resourceAccess
         ], $payload);
 
-        return JWT::encode($payload, $privateKey, 'RS256');
+        return JWT::encode($payload, $privateKey, $alg, $kid);
     }
 }
