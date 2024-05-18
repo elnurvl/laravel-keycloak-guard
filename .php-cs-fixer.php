@@ -5,6 +5,7 @@ use PhpCsFixer\Finder;
 
 $rules = [
     '@PSR12' => true,
+    'declare_strict_types' => true,
     'no_unused_imports' => true,
     'braces' => true,
     'array_indentation' => true,

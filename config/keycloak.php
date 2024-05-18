@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'realm_public_key' => env('KEYCLOAK_REALM_PUBLIC_KEY', null),
 

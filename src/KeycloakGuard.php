@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace KeycloakGuard;
 
+use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -9,13 +12,14 @@ use Illuminate\Http\Request;
 use KeycloakGuard\Exceptions\ResourceAccessNotAllowedException;
 use KeycloakGuard\Exceptions\TokenException;
 use KeycloakGuard\Exceptions\UserNotFoundException;
+use stdClass;
 
 class KeycloakGuard implements Guard
 {
-    protected $config;
-    protected $user;
-    protected $provider;
-    protected $decodedToken;
+    protected array $config;
+    protected ?Authenticatable $user;
+    protected ?UserProvider $provider;
+    protected ?stdClass $decodedToken;
     protected Request $request;
 
     public function __construct(UserProvider $provider, Request $request)
@@ -32,13 +36,13 @@ class KeycloakGuard implements Guard
     /**
      * Decode token, validate and authenticate user
      *
-     * @return mixed
+     * @return void
      */
-    protected function authenticate()
+    protected function authenticate(): void
     {
         try {
             $this->decodedToken = Token::decode($this->getTokenForRequest(), $this->config['realm_public_key'], $this->config['leeway'], $this->config['token_encryption_algorithm']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new TokenException($e->getMessage());
         }
 
@@ -52,9 +56,9 @@ class KeycloakGuard implements Guard
     /**
      * Get the token for the current request.
      *
-     * @return string
+     * @return ?string
      */
-    public function getTokenForRequest()
+    public function getTokenForRequest(): ?string
     {
         $inputKey = $this->config['input_key'] ?? "";
 
@@ -66,7 +70,7 @@ class KeycloakGuard implements Guard
        *
        * @return bool
        */
-    public function check()
+    public function check(): bool
     {
         return !is_null($this->user());
     }
@@ -76,7 +80,7 @@ class KeycloakGuard implements Guard
      *
      * @return bool
      */
-    public function hasUser()
+    public function hasUser(): bool
     {
         return !is_null($this->user());
     }
@@ -86,18 +90,18 @@ class KeycloakGuard implements Guard
      *
      * @return bool
      */
-    public function guest()
+    public function guest(): bool
     {
         return !$this->check();
     }
 
-     /**
-     * Set the current user.
-     *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @return void
-     */
-    public function setUser(Authenticatable $user)
+    /**
+    * Set the current user.
+    *
+    * @param Authenticatable $user
+    * @return void
+    */
+    public function setUser(Authenticatable $user): void
     {
         $this->user = $user;
     }
@@ -105,9 +109,9 @@ class KeycloakGuard implements Guard
     /**
      * Get the currently authenticated user.
      *
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     * @return Authenticatable|null
      */
-    public function user()
+    public function user(): ?Authenticatable
     {
         if (is_null($this->user)) {
             return null;
@@ -125,19 +129,21 @@ class KeycloakGuard implements Guard
      *
      * @return int|null
      */
-    public function id()
+    public function id(): ?int
     {
-        if ($user = $this->user()) {
-            return $this->user()->id;
+        if ($this->user()) {
+            return $this->user()->getAuthIdentifier();
         }
+
+        return null;
     }
 
-     /**
-     * Returns full decoded JWT token from athenticated user
-     *
-     * @return mixed|null
-     */
-    public function token()
+    /**
+    * Returns full decoded JWT token from authenticated user
+    *
+    * @return string
+    */
+    public function token(): string
     {
         return json_encode($this->decodedToken);
     }
@@ -148,7 +154,7 @@ class KeycloakGuard implements Guard
      * @param  array  $credentials
      * @return bool
      */
-    public function validate(array $credentials = [])
+    public function validate(array $credentials = []): bool
     {
         $this->validateResources();
 
@@ -179,7 +185,7 @@ class KeycloakGuard implements Guard
      *
      * @return void
      */
-    protected function validateResources()
+    protected function validateResources(): void
     {
         if ($this->config['ignore_resources_validation']) {
             return;
@@ -194,12 +200,12 @@ class KeycloakGuard implements Guard
     }
 
     /**
-     * Check if authenticated user has a especific role into resource
+     * Check if authenticated user has a specific role into resource
      * @param string $resource
      * @param string $role
      * @return bool
      */
-    public function hasRole($resource, $role)
+    public function hasRole(string $resource, string $role): bool
     {
         $token_resource_access = (array)$this->decodedToken->resource_access;
 
@@ -214,14 +220,14 @@ class KeycloakGuard implements Guard
 
         return false;
     }
-    
+
     /**
-     * Check if authenticated user has a any role into resource
+     * Check if authenticated user has any role into resource
      * @param string $resource
-     * @param string $role
+     * @param array $roles
      * @return bool
      */
-    public function hasAnyRole($resource, array $roles)
+    public function hasAnyRole(string $resource, array $roles): bool
     {
         $token_resource_access = (array)$this->decodedToken->resource_access;
 
@@ -256,7 +262,7 @@ class KeycloakGuard implements Guard
     }
 
     /**
-     * Check if authenticated user has a especific scope
+     * Check if authenticated user has a specific scope
      * @param string $scope
      * @return bool
      */
@@ -272,7 +278,7 @@ class KeycloakGuard implements Guard
     }
 
     /**
-     * Check if authenticated user has a any scope
+     * Check if authenticated user has any scope
      * @param array $scopes
      * @return bool
      */
@@ -280,7 +286,7 @@ class KeycloakGuard implements Guard
     {
         return count(array_intersect(
             $this->scopes(),
-            is_string($scopes) ? [$scopes] : $scopes
+            $scopes
         )) > 0;
     }
 }

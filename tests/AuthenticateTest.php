@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace KeycloakGuard\Tests;
 
-use Firebase\JWT\JWT;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Hashing\BcryptHasher;
 use Illuminate\Support\Facades\Auth;
@@ -19,11 +20,6 @@ use KeycloakGuard\Token;
 class AuthenticateTest extends TestCase
 {
     use ActingAsKeycloakUser;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
 
     public function test_authenticates_the_user_when_requesting_a_private_endpoint_with_token()
     {
@@ -50,7 +46,7 @@ class AuthenticateTest extends TestCase
         $this->assertEquals($this->user->username, Auth::user()->username);
     }
 
-    public function test_forbiden_when_request_a_protected_endpoint_without_token()
+    public function test_forbidden_when_request_a_protected_endpoint_without_token()
     {
         $this->expectException(AuthenticationException::class);
         $this->json('GET', '/foo/secret');
@@ -60,18 +56,18 @@ class AuthenticateTest extends TestCase
     {
         $this->withKeycloakToken()->json('GET', '/foo/secret');
 
-        $this->assertEquals(Auth::hasUser(), true);
-        $this->assertEquals(Auth::guest(), false);
-        $this->assertEquals(Auth::id(), $this->user->id);
+        $this->assertEquals(true, Auth::hasUser());
+        $this->assertEquals(false, Auth::guest());
+        $this->assertEquals($this->user->id, Auth::id());
     }
 
-    public function test_laravel_default_interface_for_unathenticated_users()
+    public function test_laravel_default_interface_for_unauthenticated_users()
     {
         $this->json('GET', '/foo/public');
 
-        $this->assertEquals(Auth::hasUser(), false);
-        $this->assertEquals(Auth::guest(), true);
-        $this->assertEquals(Auth::id(), null);
+        $this->assertEquals(false, Auth::hasUser());
+        $this->assertEquals(true, Auth::guest());
+        $this->assertEquals(null, Auth::id());
     }
 
     public function test_throws_a_exception_when_user_is_not_found()
@@ -128,7 +124,7 @@ class AuthenticateTest extends TestCase
         $this->expectException(ResourceAccessNotAllowedException::class);
 
         $this->buildCustomToken([
-            'resource_access' => ['some_resouce_not_allowed' => []]
+            'resource_access' => ['some_resource_not_allowed' => []]
         ]);
 
         $this->withKeycloakToken()->json('GET', '/foo/secret');
@@ -139,7 +135,7 @@ class AuthenticateTest extends TestCase
         config(['keycloak.ignore_resources_validation' => true]);
 
         $this->buildCustomToken([
-            'resource_access' => ['some_resouce_not_allowed' => []]
+            'resource_access' => ['some_resource_not_allowed' => []]
         ]);
 
         $this->withKeycloakToken()->json('GET', '/foo/secret');
@@ -394,7 +390,7 @@ class AuthenticateTest extends TestCase
     {
         config(['keycloak.input_key' => "api_token"]);
 
-        $this->json('GET', '/foo/secret?api_token=' . $this->token);
+        $this->json('GET', '/foo/secret?api_token='.$this->token);
 
         $this->assertEquals(Auth::id(), $this->user->id);
 

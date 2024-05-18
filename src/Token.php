@@ -1,20 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace KeycloakGuard;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use stdClass;
 
 class Token
 {
     /**
      * Decode a JWT token
      *
-     * @param  string  $token
-     * @param  string  $publicKey
-     * @return mixed|null
+     * @param string|null $token
+     * @param string $publicKey
+     * @param int $leeway
+     * @param string $algorithm
+     * @return stdClass|null
      */
-    public static function decode(string $token = null, string $publicKey, int $leeway = 0, string $algorithm = 'RS256')
+    public static function decode(?string $token = null, string $publicKey, int $leeway = 0, string $algorithm = 'RS256'): ?stdClass
     {
         JWT::$leeway = $leeway;
         $publicKey = self::buildPublicKey($publicKey);
@@ -26,9 +31,9 @@ class Token
      * Build a valid public key from a string
      *
      * @param  string  $key
-     * @return mixed
+     * @return string
      */
-    private static function buildPublicKey(string $key)
+    private static function buildPublicKey(string $key): string
     {
         return "-----BEGIN PUBLIC KEY-----\n".wordwrap($key, 64, "\n", true)."\n-----END PUBLIC KEY-----";
     }
@@ -43,8 +48,7 @@ class Token
     {
         $string = str_replace('-----BEGIN PUBLIC KEY-----', '', $key);
         $string = trim(str_replace('-----END PUBLIC KEY-----', '', $string));
-        $string = str_replace('\n', '', $string);
 
-        return $string;
+        return str_replace('\n', '', $string);
     }
 }

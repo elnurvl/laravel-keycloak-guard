@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace KeycloakGuard\Tests;
 
 use Firebase\JWT\JWT;
@@ -38,7 +40,7 @@ class TestCase extends Orchestra
         ]);
     }
 
-    protected function prepareCredentials(string $encryptionAlgorithm = 'RS256', ?array $openSSLConfig = null)
+    protected function prepareCredentials(string $encryptionAlgorithm = 'RS256', ?array $openSSLConfig = null): void
     {
         // Prepare private/public keys and a default JWT token, with a simple payload
         if (!$openSSLConfig) {
@@ -62,7 +64,7 @@ class TestCase extends Orchestra
     }
 
     // Default configs to make it running
-    protected function defineEnvironment($app)
+    protected function defineEnvironment($app): void
     {
         $app['config']->set('auth.defaults.guard', 'api');
         $app['config']->set('auth.providers.users.model', User::class);
@@ -82,7 +84,7 @@ class TestCase extends Orchestra
         ]);
     }
 
-    protected function setUpDatabase(Application $app)
+    protected function setUpDatabase(Application $app): void
     {
         $app['db']->connection()->getSchemaBuilder()->create('users', function (Blueprint $table) {
             $table->increments('id');
@@ -91,7 +93,7 @@ class TestCase extends Orchestra
         });
     }
 
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         Route::any('/foo/secret', 'KeycloakGuard\Tests\Controllers\FooController@secret')->middleware(Authenticate::class);
         Route::any('/foo/public', 'KeycloakGuard\Tests\Controllers\FooController@public');
@@ -100,7 +102,7 @@ class TestCase extends Orchestra
     }
 
     // Build a different token with custom payload
-    protected function buildCustomToken(array $payload, string $encryptionAlgorithm = 'RS256')
+    protected function buildCustomToken(array $payload, string $encryptionAlgorithm = 'RS256'): void
     {
         $payload = array_replace($this->payload, $payload);
 
@@ -108,7 +110,7 @@ class TestCase extends Orchestra
     }
 
     // Setup default token, for the default user
-    public function withKeycloakToken()
+    public function withKeycloakToken(): self
     {
         $this->withToken($this->token);
 

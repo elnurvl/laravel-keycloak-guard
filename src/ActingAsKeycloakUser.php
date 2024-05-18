@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace KeycloakGuard;
 
 use Firebase\JWT\JWT;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Config;
 
 trait ActingAsKeycloakUser
 {
-    public function actingAsKeycloakUser($user = null, $payload = [])
+    public function actingAsKeycloakUser(Authenticatable|string|null $user = null, array $payload = []): self
     {
         if (!$user) {
             Config::set('keycloak.load_user_from_database', false);
@@ -20,7 +23,7 @@ trait ActingAsKeycloakUser
         return $this;
     }
 
-    public function generateKeycloakToken($user = null, $payload = [])
+    public function generateKeycloakToken(Authenticatable|string|null $user = null, array $payload = []): string
     {
         $privateKey = openssl_pkey_new([
             'digest_alg' => 'sha256',

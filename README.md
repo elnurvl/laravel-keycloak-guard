@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="bird.png">
+  <img src="bird.png" alt="bird">
 </p>
 <p align="center">
 &nbsp;
-        <img src="https://img.shields.io/packagist/v/robsontenorio/laravel-keycloak-guard.svg" />
-        <img src="https://img.shields.io/packagist/dt/robsontenorio/laravel-keycloak-guard.svg" />
-      <img src="https://codecov.io/gh/robsontenorio/laravel-keycloak-guard/branch/master/graph/badge.svg?token=8ZpDarpss1"/>
+        <img src="https://img.shields.io/packagist/v/robsontenorio/laravel-keycloak-guard.svg"  alt="badge_packagist"/>
+        <img src="https://img.shields.io/packagist/dt/robsontenorio/laravel-keycloak-guard.svg"  alt="badge_downloads"/>
+        <img src="https://codecov.io/gh/robsontenorio/laravel-keycloak-guard/branch/master/graph/badge.svg?token=8ZpDarpss1" alt="badge_codecov"/>
 
 </p>
 
@@ -32,27 +32,27 @@ This package helps you authenticate users on a Laravel API based on JWT tokens g
 # The flow
 
 <p align="center">
-  <img src="flow.png">
+  <img src="flow.png" alt="flow_diagram">
 </p>
 
 1. The frontend user authenticates on Keycloak Server
 
-1. The frontend user obtains a JWT token.
+2. The frontend user obtains a JWT token.
 
-1. In another moment, the frontend user makes a request to some protected endpoint on a Laravel API, with that token.
+3. In another moment, the frontend user makes a request to some protected endpoint on a Laravel API, with that token.
 
-1. The Laravel API (through `Keycloak Guard`) handle it.
+4. The Laravel API (through `Keycloak Guard`) handle it.
 
    - Verify token signature.
    - Verify token structure.
    - Verify token expiration time.
    - Verify if my API allows `resource access` from token.
 
-1. If everything is ok, then find the user on database and authenticate it on my API.
+5. If everything is ok, then find the user on database and authenticate it on my API.
 
-1. Optionally, the user can be created / updated in the API users database.
+6. Optionally, the user can be created / updated in the API users database.
 
-1. Return response
+7. Return response
 
 # Install
 
@@ -108,7 +108,8 @@ _Required. Default is `true`._
 
 If you do not have an `users` table you must disable this.
 
-It fetchs user from database and fill values into authenticated user object. If enabled, it will work together with `user_provider_credential` and `token_principal_attribute`.
+It fetches user from database and fill values into authenticated user object. If enabled, it will work together
+with `user_provider_credential` and `token_principal_attribute`.
 
 ✔️ **user_provider_custom_retrieve_method**
 
@@ -124,7 +125,8 @@ If using this feature, obviously, values defined for `user_provider_credential` 
 _Required.
 Default is `username`._
 
-The field from "users" table that contains the user unique identifier (eg. username, email, nickname). This will be confronted against `token_principal_attribute` attribute, while authenticating.
+The field from "users" table that contains the user unique identifier (e.g. username, email, nickname). This will be
+confronted against `token_principal_attribute` attribute, while authenticating.
 
 ✔️ **token_principal_attribute**
 
@@ -138,13 +140,17 @@ This will be confronted against `user_provider_credential` attribute, while auth
 
 _Default is `false`._
 
-Appends to the authenticated user the full decoded JWT token (`$user->token`). Useful if you need to know roles, groups and other user info holded by JWT token. Even choosing `false`, you can also get it using `Auth::token()`, see API section.
+Appends to the authenticated user the full decoded JWT token (`$user->token`). Useful if you need to know roles, groups
+and other user info held by JWT token. Even choosing `false`, you can also get it using `Auth::token()`, see API
+section.
 
 ✔️ **allowed_resources**
 
 _Required_.
 
-Usually you API should handle one _resource_access_. But, if you handle multiples, just use a comma separated list of allowed resources accepted by API. This attribute will be confronted against `resource_access` attribute from JWT token, while authenticating.
+Usually your API should handle one _resource_access_. But, if you handle multiples, just use a comma separated list of
+allowed resources accepted by API. This attribute will be confronted against `resource_access` attribute from JWT token,
+while authenticating.
 
 ✔️ **ignore_resources_validation**
 
@@ -162,7 +168,8 @@ You can add a leeway to account for when there is a clock skew times between the
 
 _Default is `null`._
 
-By default this package **always** will look at first for a `Bearer` token. Additionally, if this option is enabled, then it will try to get a token from this custom request param.
+By default, this package **always** will look at first for a `Bearer` token. Additionally, if this option is enabled,
+then it will try to get a token from this custom request param.
 
 ```php
 // keycloak.php
