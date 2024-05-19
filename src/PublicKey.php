@@ -96,7 +96,17 @@ class PublicKey
      */
     private static function fetchJWKS(string $realm): array
     {
-        $wellKnownUrl = config('keycloak.host').'/realms/'.$realm.'/.well-known/openid-configuration';
+        $baseUrl = config('keycloak.host').'/realms/'.$realm;
+        // Try the already-known JWK URI first
+        $jwksUri = $baseUrl.'/protocol/openid-connect/certs';
+        $jwksResponse = Http::get($jwksUri);
+
+        if ($jwksResponse->successful()) {
+            return $jwksResponse->json();
+        }
+
+        // Obtain the URI from the discovery document if the initially assumed one was not valid
+        $wellKnownUrl = $baseUrl.'/.well-known/openid-configuration';
         $wellKnownResponse = Http::get($wellKnownUrl);
 
         if (!$wellKnownResponse->successful()) {
