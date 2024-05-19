@@ -94,6 +94,7 @@ class TestCase extends Orchestra
 
         $app['config']->set('keycloak', [
             'realm' => $this->realm,
+            'key_cache_lifetime' => 0,
             'user_provider_credential' => 'username',
             'token_principal_attribute' => 'preferred_username',
             'append_decoded_token' => false,

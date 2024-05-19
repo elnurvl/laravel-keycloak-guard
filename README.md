@@ -109,6 +109,22 @@ If you do not have an `users` table you must disable this.
 It fetches user from database and fill values into authenticated user object. If enabled, it will work together
 with `user_provider_credential` and `token_principal_attribute`.
 
+✔️ **key_cache_lifetime**
+
+_Default is 1 day._
+
+Once public keys is retrieved from the JWKS URI they will be cached to be reused in subsequent requests
+until the cache lifespan reaches the value specified in this configuration value.
+
+Signing keys for authorization servers are suggested to be rotated only once or twice in every year.
+
+Make sure you have the old keys remaining active at least a day or two simultaneously with the new ones,
+or you will have to invalidate the cache by yourself:
+
+```shell
+php artisan cache:forget laravel-keycloak-guard:<iss>
+```
+
 ✔️ **user_provider_custom_retrieve_method**
 
 _Default is `null`._

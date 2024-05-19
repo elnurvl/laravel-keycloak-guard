@@ -6,6 +6,7 @@ namespace KeycloakGuard;
 
 use Firebase\JWT\JWK;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use KeycloakGuard\Exceptions\PublicKeyException;
 use Ramsey\Uuid\Uuid;
@@ -20,9 +21,13 @@ class PublicKey
      */
     public static function getPublicKey(string $realm): array
     {
-        $jwks = self::fetchJWKS($realm);
+        $cacheLifetime = config('keycloak.key_cache_lifetime', 0);
 
-        return JWK::parseKeySet($jwks);
+        return Cache::remember('laravel-keycloak-guard:'.$realm, $cacheLifetime, function () use ($realm) {
+            $jwks = self::fetchJWKS($realm);
+
+            return JWK::parseKeySet($jwks);
+        });
     }
 
     /**
