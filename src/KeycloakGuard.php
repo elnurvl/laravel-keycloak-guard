@@ -47,7 +47,9 @@ class KeycloakGuard implements Guard
         }
 
         try {
-            $this->decodedToken = Token::decode($token, $this->config['leeway']);
+            $this->decodedToken = $this->config['use_introspection'] ?
+                Token::introspect($token) :
+                Token::decode($token, $this->config['leeway']);
         } catch (BeforeValidException $e) {
             throw new TokenException($e->getMessage());
         }

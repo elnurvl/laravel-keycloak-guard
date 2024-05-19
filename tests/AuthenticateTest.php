@@ -7,6 +7,7 @@ namespace KeycloakGuard\Tests;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Hashing\BcryptHasher;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use KeycloakGuard\ActingAsKeycloakUser;
 use KeycloakGuard\Exceptions\ResourceAccessNotAllowedException;
 use KeycloakGuard\Exceptions\TokenException;
@@ -21,8 +22,15 @@ class AuthenticateTest extends TestCase
 {
     use ActingAsKeycloakUser;
 
-    public function test_authenticates_the_user_when_requesting_a_private_endpoint_with_token()
+    /**
+     * @dataProvider validationMethod
+     *
+     * @return void
+     */
+    public function test_authenticates_the_user_when_requesting_a_private_endpoint_with_token(bool $useIntrospection)
     {
+        config(['keycloak.use_introspection' => $useIntrospection]);
+
         $this->withKeycloakToken()->json('GET', '/foo/secret');
         $this->assertEquals($this->user->username, Auth::user()->username);
 
@@ -39,16 +47,50 @@ class AuthenticateTest extends TestCase
         $this->assertEquals($this->user->username, Auth::user()->username);
     }
 
-    public function test_authenticates_the_user_when_requesting_an_public_endpoint_with_token()
+    /**
+     * @dataProvider validationMethod
+     *
+     * @return void
+     */
+    public function test_authenticates_the_user_when_requesting_an_public_endpoint_with_token(bool $useIntrospection)
     {
+        config(['keycloak.use_introspection' => $useIntrospection]);
+
         $this->withKeycloakToken()->json('GET', '/foo/public');
 
         $this->assertEquals($this->user->username, Auth::user()->username);
     }
 
-    public function test_forbidden_when_request_a_protected_endpoint_without_token()
+    /**
+     * @dataProvider validationMethod
+     *
+     * @return void
+     */
+    public function test_forbidden_when_request_a_protected_endpoint_without_token(bool $useIntrospection)
     {
+        config(['keycloak.use_introspection' => $useIntrospection]);
+
         $this->expectException(AuthenticationException::class);
+        $this->json('GET', '/foo/secret');
+    }
+
+    public function test_forbidden_when_request_a_protected_endpoint_with_invalid_token()
+    {
+        config(['keycloak.use_introspection' => true]);
+
+        $baseUrl = 'http://keycloak.test/realms/strict';
+
+        $this->buildCustomToken([
+            'iss' => $baseUrl
+        ]);
+
+        Http::fake([
+            "$baseUrl/protocol/openid-connect/token/introspect" => Http::response([
+                'active' => false,
+            ]),
+        ]);
+
+        $this->withKeycloakToken()->expectException(AuthenticationException::class);
         $this->json('GET', '/foo/secret');
     }
 
@@ -491,6 +533,14 @@ class AuthenticateTest extends TestCase
     {
         return [
             ['ES256'],
+        ];
+    }
+
+    public function validationMethod(): array
+    {
+        return [
+            [false],
+            [true],
         ];
     }
 }

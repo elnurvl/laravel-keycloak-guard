@@ -97,6 +97,27 @@ If you do not have an `users` table you must disable this.
 It fetches user from database and fill values into authenticated user object. If enabled, it will work together
 with `user_provider_credential` and `token_principal_attribute`.
 
+✔️ **use_introspection**
+
+_Default is `false`._
+
+Validates the access token with the authorization server instead of relying on JWT.
+Useful for revocable access tokens.
+Note that introspection is intended for user tokens where a human manually logs in to open an active session.
+Access tokens generated for M2M communications will not open a session; therefore, introspection will always yield a negative result for an active token.
+
+✔️ **client_id**
+
+_Required, only if `use_introspection` is `true`._
+
+Client ID to be used for token introspection. The client must be in the same realm as the token issuer.
+
+✔️ **client_secret**
+
+_Required, only if `use_introspection` is `true`._
+
+Client secret to be used for token introspection. The client must be in the same realm as the token issuer.
+
 ✔️ **key_cache_lifetime**
 
 _Default is 1 day._

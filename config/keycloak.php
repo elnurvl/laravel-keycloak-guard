@@ -3,9 +3,15 @@
 declare(strict_types=1);
 
 return [
-    'key_cache_lifetime' => env('KEYCLOAK_KEY_CACHE_LIFETIME', 86400),
-
     'load_user_from_database' => env('KEYCLOAK_LOAD_USER_FROM_DATABASE', true),
+
+    'use_introspection' => env('KEYCLOAK_USE_INTROSPECTION', false),
+
+    'client_id' => env('KEYCLOAK_CLIENT_ID'),
+
+    'client_secret' => env('KEYCLOAK_CLIENT_SECRET'),
+
+    'key_cache_lifetime' => env('KEYCLOAK_KEY_CACHE_LIFETIME', 86400),
 
     'user_provider_custom_retrieve_method' => null,
 

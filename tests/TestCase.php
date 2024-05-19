@@ -63,20 +63,22 @@ class TestCase extends Orchestra
 
         $this->kid = Uuid::uuid4()->toString();
 
+        $this->payload = [
+            'iss' => $baseUrl,
+            'preferred_username' => 'johndoe',
+            'resource_access' => ['myapp-backend' => []],
+            'active' => true
+        ];
+
         Http::fake([
             "$baseUrl/.well-known/openid-configuration" => Http::response([
                 'jwks_uri' => "$baseUrl/protocol/openid-connect/certs"
             ]),
+            "$baseUrl/protocol/openid-connect/token/introspect" => Http::response($this->payload),
             "$baseUrl/protocol/openid-connect/certs" => Http::response([
                 'keys' => [ PublicKey::convertPublicKeyToJWK($publicKey, $encryptionAlgorithm, $this->kid) ]
             ]),
         ]);
-
-        $this->payload = [
-            'iss' => $baseUrl,
-            'preferred_username' => 'johndoe',
-            'resource_access' => ['myapp-backend' => []]
-        ];
 
         $this->token = JWT::encode($this->payload, $this->privateKey, $encryptionAlgorithm, $this->kid);
     }
@@ -93,6 +95,8 @@ class TestCase extends Orchestra
         ]);
 
         $app['config']->set('keycloak', [
+            'client_id' => fake()->word,
+            'client_secret' => fake()->uuid,
             'key_cache_lifetime' => 0,
             'user_provider_credential' => 'username',
             'token_principal_attribute' => 'preferred_username',
