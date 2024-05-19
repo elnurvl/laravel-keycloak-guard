@@ -88,18 +88,6 @@ For facades, uncomment `$app->withFacades();` in your boostrap app file `bootstr
 php artisan vendor:publish  --provider="KeycloakGuard\KeycloakGuardServiceProvider"
 ```
 
-✔️ **host**
-
-_Required._
-
-The Keycloak Server host (string).
-
-✔️ **realm**
-
-_Required._
-
-The Keycloak realm.
-
 ✔️ **load_user_from_database**
 
 _Required. Default is `true`._

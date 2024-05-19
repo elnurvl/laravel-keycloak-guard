@@ -12,14 +12,17 @@ class Token
     /**
      * Decode a JWT token
      *
-     * @param string|null $token
+     * @param string $token
      * @param int $leeway
      *
      * @return stdClass|null
      */
-    public static function decode(?string $token, int $leeway = 0): ?stdClass
+    public static function decode(string $token, int $leeway = 0): ?stdClass
     {
-        $publicKey = PublicKey::getPublicKey(config('keycloak.realm'));
+        list(, $payload, ) = explode('.', $token);
+        $payload = json_decode(base64_decode($payload));
+        $iss = $payload->iss;
+        $publicKey = PublicKey::getPublicKey($iss);
 
         JWT::$leeway = $leeway;
 

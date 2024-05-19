@@ -40,8 +40,14 @@ class KeycloakGuard implements Guard
      */
     protected function authenticate(): void
     {
+        $token = $this->getTokenForRequest();
+
+        if (!$token) {
+            return;
+        }
+
         try {
-            $this->decodedToken = Token::decode($this->getTokenForRequest(), $this->config['leeway']);
+            $this->decodedToken = Token::decode($token, $this->config['leeway']);
         } catch (BeforeValidException $e) {
             throw new TokenException($e->getMessage());
         }

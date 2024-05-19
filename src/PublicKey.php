@@ -6,25 +6,26 @@ namespace KeycloakGuard;
 
 use Firebase\JWT\JWK;
 use Firebase\JWT\Key;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use KeycloakGuard\Exceptions\PublicKeyException;
+use KeycloakGuard\Exceptions\TokenException;
 use Ramsey\Uuid\Uuid;
 
 class PublicKey
 {
     /**
-     * @param string $realm
+     * @param string|null $issuer
      *
      * @return array<Key>
-     *
      */
-    public static function getPublicKey(string $realm): array
+    public static function getPublicKey(?string $issuer): array
     {
         $cacheLifetime = config('keycloak.key_cache_lifetime', 0);
 
-        return Cache::remember('laravel-keycloak-guard:'.$realm, $cacheLifetime, function () use ($realm) {
-            $jwks = self::fetchJWKS($realm);
+        return Cache::remember('laravel-keycloak-guard:'.$issuer, $cacheLifetime, function () use ($issuer) {
+            $jwks = self::fetchJWKS($issuer);
 
             return JWK::parseKeySet($jwks);
         });
@@ -90,23 +91,27 @@ class PublicKey
     }
 
     /**
-     * @param string $realm
+     * @param string|null $issuer
      *
      * @return array
      */
-    private static function fetchJWKS(string $realm): array
+    private static function fetchJWKS(?string $issuer): array
     {
-        $baseUrl = config('keycloak.host').'/realms/'.$realm;
         // Try the already-known JWK URI first
-        $jwksUri = $baseUrl.'/protocol/openid-connect/certs';
-        $jwksResponse = Http::get($jwksUri);
+        $jwksUri = $issuer.'/protocol/openid-connect/certs';
+
+        try {
+            $jwksResponse = Http::get($jwksUri);
+        } catch (ConnectionException) {
+            throw new TokenException("Token does not contain a valid issuer");
+        }
 
         if ($jwksResponse->successful()) {
             return $jwksResponse->json();
         }
 
         // Obtain the URI from the discovery document if the initially assumed one was not valid
-        $wellKnownUrl = $baseUrl.'/.well-known/openid-configuration';
+        $wellKnownUrl = $issuer.'/.well-known/openid-configuration';
         $wellKnownResponse = Http::get($wellKnownUrl);
 
         if (!$wellKnownResponse->successful()) {

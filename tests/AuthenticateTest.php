@@ -371,6 +371,20 @@ class AuthenticateTest extends TestCase
         $this->withKeycloakToken()->json('GET', '/foo/secret');
     }
 
+    public function test_throws_a_exception_with_invalid_iss()
+    {
+        $this->expectException(TokenException::class);
+
+        $this->buildCustomToken([
+            'iss' => null,
+            'iat' => time(),
+            'preferred_username' => 'johndoe',
+            'resource_access' => ['myapp-backend' => []]
+        ]);
+
+        $this->withKeycloakToken()->json('GET', '/foo/secret');
+    }
+
     public function test_works_with_leeway()
     {
         // Allows up to 60 seconds ahead in the  future
@@ -467,11 +481,7 @@ class AuthenticateTest extends TestCase
         $this->prepareCredentials($algorithm, [
             'private_key_type' => OPENSSL_KEYTYPE_EC,
             'curve_name' => 'prime256v1'
-        ], $algorithm);
-
-        config([
-            'keycloak.realm' => $algorithm,
-        ]);
+        ], fake()->word);
 
         $this->withKeycloakToken()->json('GET', '/foo/secret');
         $this->assertEquals($this->user->username, Auth::user()->username);

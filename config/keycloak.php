@@ -3,10 +3,6 @@
 declare(strict_types=1);
 
 return [
-    'host' => env('KEYCLOAK_HOST', 'http://localhost:8080'),
-
-    'realm' => env('KEYCLOAK_REALM', 'master'),
-
     'key_cache_lifetime' => env('KEYCLOAK_KEY_CACHE_LIFETIME', 86400),
 
     'load_user_from_database' => env('KEYCLOAK_LOAD_USER_FROM_DATABASE', true),

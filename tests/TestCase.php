@@ -21,7 +21,6 @@ use Ramsey\Uuid\Uuid;
 class TestCase extends Orchestra
 {
     public OpenSSLAsymmetricKey $privateKey;
-    public string $realm = 'RS256';
     public array $payload;
     public string $token;
     public string $kid;
@@ -59,8 +58,8 @@ class TestCase extends Orchestra
 
         $publicKey = openssl_pkey_get_details($this->privateKey)['key'];
 
-        $realm ??= $this->realm;
-        $baseUrl = config('keycloak.host').'/realms/'.$realm;
+        $realm ??= 'test';
+        $baseUrl = 'http://keycloak.test/realms/'.$realm;
 
         $this->kid = Uuid::uuid4()->toString();
 
@@ -74,6 +73,7 @@ class TestCase extends Orchestra
         ]);
 
         $this->payload = [
+            'iss' => $baseUrl,
             'preferred_username' => 'johndoe',
             'resource_access' => ['myapp-backend' => []]
         ];
@@ -93,7 +93,6 @@ class TestCase extends Orchestra
         ]);
 
         $app['config']->set('keycloak', [
-            'realm' => $this->realm,
             'key_cache_lifetime' => 0,
             'user_provider_credential' => 'username',
             'token_principal_attribute' => 'preferred_username',

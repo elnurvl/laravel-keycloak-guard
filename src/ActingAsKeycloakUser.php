@@ -38,11 +38,7 @@ trait ActingAsKeycloakUser
 
         $kid = Uuid::uuid4()->toString();
 
-        $realm = 'laravel';
-
-        Config::set('keycloak.realm', $realm);
-
-        $baseUrl = config('keycloak.host').'/realms/'.$realm;
+        $baseUrl = 'http://keycloak.test/realms/laravel';
 
         Http::fake([
             "$baseUrl/.well-known/openid-configuration" => Http::response([
@@ -60,6 +56,7 @@ trait ActingAsKeycloakUser
         $principal = Config::get('keycloak.token_principal_attribute');
         $credential = Config::get('keycloak.user_provider_credential');
         $payload = array_merge([
+            'iss' => $baseUrl,
             'iat' => $iat,
             'exp' => $exp,
             $principal => is_string($user) ? $user : $user->$credential ?? config('keycloak.preferred_username'),
