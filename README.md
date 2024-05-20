@@ -362,6 +362,34 @@ public test_a_protected_route()
 }
 ```
 
+Whatever you pass in the payload will override default claims,
+which includes `aud`, `iat`, `exp`, `iss`, `azp`, `resource_access` and either `sub` or `preferred_username`,
+depending on **token_principal_attribute** config.
+
+Alternatively, payload can be provided in a class property, so it can be reused across multiple tests:
+
+```php
+use KeycloakGuard\ActingAsKeycloakUser;
+
+protected $tokenPayload = [
+    'aud' => 'account',
+    'exp' => 1715926026,
+    'iss' => 'https://localhost:8443/realms/master'
+];
+
+public test_a_protected_route()
+{
+    $payload = [
+        'exp' => 1715914352
+    ];
+    $this->actingAsKeycloakUser($user, $payload)
+        ->getJson('/api/somewhere')
+        ->assertOk();
+}
+```
+
+Priority is given to the claims in passed as an argument, so they will override ones in the class property.
+
 # Contribute
 
 You can run this project on VSCODE with Remote Container. Make sure you will use internal VSCODE terminal (inside running container).
